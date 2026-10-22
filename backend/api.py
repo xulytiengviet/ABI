@@ -5,7 +5,9 @@ No fake/synthetic DYELS responses. Does not accept arbitrary shell commands.
 """
 from __future__ import annotations
 
+import hmac
 import os
+import signal
 import re
 import shutil
 import subprocess
@@ -90,17 +92,22 @@ def analyze_runtime(bytecode: str) -> dict:
         str(contract),
     ]
     try:
+        proc = subprocess.Popen(
+            command, cwd=str(ROOT), stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, text=True,
+            start_new_session=True, env={**os.environ, "PYTHONUNBUFFERED": "1"},
+        )
         try:
-            execution = subprocess.run(
-                command, cwd=str(ROOT), capture_output=True, text=True,
-                timeout=TIMEOUT, check=False,
-                env={**os.environ, "PYTHONUNBUFFERED": "1"},
-            )
+            returncode = proc.wait(timeout=TIMEOUT)
         except subprocess.TimeoutExpired as exc:
+            # Terminate the whole job process group: uv -> Python -> Souffle.
+            # A timeout must not leave an unbounded analysis running in the background.
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait()
             raise HTTPException(504, detail="DYELS/Gigahorse vượt quá thời gian phân tích.") from exc
-        if execution.returncode != 0:
+        if returncode != 0:
             raise HTTPException(
-                502, detail="Gigahorse thực thi không thành công (exit "+str(execution.returncode)+"). "
+                502, detail="Gigahorse thực thi không thành công (exit "+str(returncode)+"). "
                             "Kiểm tra logs của backend và các phụ thuộc Soufflé.",
             )
         if not output_dir.is_dir():
@@ -132,7 +139,7 @@ def analyze_runtime(bytecode: str) -> dict:
 def analyze(payload: AnalyzeRequest, request: Request):
     if TOKEN:
         authorization = request.headers.get("authorization", "")
-        if not authorization.startswith("Bearer ") or authorization[7:] != TOKEN:
+        if not authorization.startswith("Bearer ") or not hmac.compare_digest(authorization[7:], TOKEN):
             raise HTTPException(401, detail="Yêu cầu Bearer token hợp lệ.")
     if not HEX_RE.fullmatch(payload.bytecode):
         raise HTTPException(422, detail="Bytecode phải là chuỗi hex 0x có độ dài chẵn.")
