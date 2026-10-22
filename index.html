@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080c1d">
+  <meta name="description" content="ABI Nexus: phòng thí nghiệm Web3 để giải mã ABI, giao dịch Ethereum, disassemble EVM bytecode và phân tích bằng chứng MEV.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https: http://localhost:8545 http://127.0.0.1:8545; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>ABI NEXUS · EVM Reverse Engineering & MEV Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><div class="grain"></div>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Điều hướng chính">
+      <a class="brand" href="#dashboard" aria-label="ABI Nexus">
+        <span class="brand-mark"><span class="hex-core">⬡</span></span>
+        <span><strong>ABI<span class="brand-glow">NEXUS</span></strong><small>REVERSE ENGINEERING LAB</small></span>
+      </a>
+      <div class="side-kicker">KHÔNG GIAN PHÂN TÍCH</div>
+      <nav class="side-nav" aria-label="Công cụ">
+        <button class="nav-link active" data-go="dashboard"><span class="nav-ico">◈</span><span>Tổng quan</span><span class="nav-trailing">01</span></button>
+        <button class="nav-link" data-go="abi"><span class="nav-ico">⌘</span><span>Giải mã ABI</span><span class="nav-trailing">02</span></button>
+        <button class="nav-link" data-go="tx"><span class="nav-ico">⇄</span><span>Giao dịch ETH</span><span class="nav-trailing">03</span></button>
+        <button class="nav-link" data-go="bytecode"><span class="nav-ico">▦</span><span>Phục hồi Bytecode</span><span class="nav-trailing">04</span></button>
+        <button class="nav-link" data-go="mev"><span class="nav-ico">⌁</span><span>MEV Intelligence</span><span class="nav-trailing">05</span></button>
+      </nav>
+      <div class="sidebar-divider"></div>
+      <div class="side-kicker">TÀI NGUYÊN</div>
+      <nav class="side-nav">
+        <a class="nav-link" href="https://github.com/xulytiengviet/ABI" target="_blank" rel="noopener noreferrer"><span class="nav-ico">↗</span><span>Mã nguồn GitHub</span></a>
+        <a class="nav-link" href="https://zenodo.org/records/12670354" target="_blank" rel="noopener noreferrer"><span class="nav-ico">◇</span><span>VarLifter Research</span></a>
+      </nav>
+      <div class="side-bottom">
+        <div class="node-pulse"><span class="pulse-dot"></span> LOCAL-FIRST · READ ONLY</div>
+        <div class="side-note">Không yêu cầu ví, private key hoặc seed phrase. Kết quả khôi phục là suy luận kỹ thuật, không phải mã nguồn gốc.</div>
+        <small>ABI NEXUS · BUILD 2026.10</small>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">WORKSPACE <span>/</span> <b id="crumb-current">TỔNG QUAN</b></div>
+        <div class="top-actions">
+          <span class="chain-chip"><span class="eth-diamond">◆</span> Ethereum Mainnet</span>
+          <span class="live-chip" id="lib-status"><i></i> Đang nạp bộ giải mã</span>
+          <button class="icon-button" id="btn-help" title="Thông tin & giới hạn" aria-label="Thông tin">?</button>
+        </div>
+      </header>
+      <div class="content">
+        <section class="view active" id="view-dashboard">
+          <div class="eyebrow"><span class="eyebrow-line"></span> WEB3 FORENSICS / OPEN RESEARCH</div>
+          <div class="hero">
+            <div class="hero-copy">
+              <div class="hero-pill">✦ EVM · ABI · MEV <span> / </span> RESEARCH WORKSTATION</div>
+              <h1>Giải mã <span>hợp đồng</span><br>thông minh.</h1>
+              <p>Khám phá giao diện ABI, giải mã calldata, đọc bytecode EVM và rà soát bằng chứng giao dịch MEV — từ dữ liệu thực, có thể kiểm chứng.</p>
+              <div class="hero-actions">
+                <button class="btn primary" data-go="abi">Khởi động phân tích <span>↗</span></button>
+                <button class="btn ghost" id="btn-demo">Nạp dữ liệu mẫu <span>▷</span></button>
+              </div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
+              <div class="orbit-node n1"></div><div class="orbit-node n2"></div><div class="orbit-node n3"></div>
+              <div class="eth-object"><div class="eth-upper"></div><div class="eth-lower"></div></div>
+              <div class="hero-art-label label-a">EVM BYTECODE<br>0x60…55</div><div class="hero-art-label label-b">ABI FRAGMENTS<br>4-BYTE SELECTOR</div>
+            </div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><span>PHƯƠNG PHÁP</span><strong>04<span class="accent">+</span></strong><small>ABI · Tx · Opcodes · MEV</small></div>
+            <div class="metric"><span>CHẾ ĐỘ</span><strong>100<span class="accent">%</span></strong><small>Đọc và phân tích, không ký giao dịch</small></div>
+            <div class="metric"><span>BỘ GIẢI MÃ</span><strong id="metric-version">EVM</strong><small>Solidity ABI / Ethereum JSON-RPC</small></div>
+            <div class="metric"><span>TÍNH MINH BẠCH</span><strong>IR<span class="accent"> / </span>RAW</strong><small>Luôn giữ dữ liệu & chứng cứ gốc</small></div>
+          </div>
+          <div class="section-head"><div><span class="eyebrow">MODULAR TOOLS</span><h2>Phòng thí nghiệm của bạn</h2></div><span class="section-hint">Chọn mô-đun để bắt đầu →</span></div>
+          <div class="module-grid">
+            <button class="module-card" data-go="abi"><span class="module-symbol cyan">⌘</span><small>MODULE 01</small><strong>ABI Decoder</strong><p>Phân tích JSON ABI, hàm, sự kiện, lỗi và chữ ký 4 byte.</p><span class="module-link">Khám phá <b>↗</b></span></button>
+            <button class="module-card" data-go="tx"><span class="module-symbol violet">⇄</span><small>MODULE 02</small><strong>Transaction Lab</strong><p>Giải mã calldata, receipt logs và các tham số giao dịch ETH.</p><span class="module-link">Khám phá <b>↗</b></span></button>
+            <button class="module-card" data-go="bytecode"><span class="module-symbol lime">▦</span><small>MODULE 03</small><strong>Bytecode Explorer</strong><p>Disassembly, opcode, selector và dấu hiệu truy cập storage.</p><span class="module-link">Khám phá <b>↗</b></span></button>
+            <button class="module-card" data-go="mev"><span class="module-symbol orange">⌁</span><small>MODULE 04</small><strong>MEV Intelligence</strong><p>Đọc bằng chứng on-chain; phân biệt quan sát và suy đoán MEV.</p><span class="module-link">Khám phá <b>↗</b></span></button>
+          </div>
+          <div class="disclaimer"><span>ⓘ</span><div><strong>Giới hạn phục hồi</strong><p>ABI chỉ mô tả giao diện bên ngoài. Để suy luận trạng thái và logic hợp đồng cần bytecode, dữ liệu blockchain và những bộ phân tích sâu hơn như VarLifter. Công cụ này không tự nhận phục hồi 100% Solidity hoặc xác nhận một giao dịch là MEV.</p></div></div>
+        </section>
+        <section class="view" id="view-abi">
+          <div class="page-heading"><div class="eyebrow">01 / CONTRACT INTERFACE</div><h1>ABI <span>Decoder</span></h1><p>Nhập ABI JSON để đọc chính xác các hàm, sự kiện, lỗi, chữ ký và selector. Phân tích ngay trong trình duyệt.</p></div>
+          <div class="workspace-grid">
+            <div class="panel"><div class="panel-head"><div><span class="panel-index">INPUT / JSON</span><h3>Hợp đồng & ABI</h3></div><button class="mini-btn" id="sample-abi">Dùng mẫu ERC-20 ↗</button></div>
+              <label class="field-label" for="abi-input">ABI JSON hoặc Etherscan result</label>
+              <textarea id="abi-input" class="code-input" rows="14" spellcheck="false" placeholder='[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address"},{"name":"amount","type":"uint256"}],"outputs":[{"type":"bool"}]}]'></textarea>
+              <div class="upload-row"><label for="abi-upload" class="mini-btn file-label">↑ Tải lên .json</label><input id="abi-upload" type="file" accept=".json,application/json" hidden><span>Tệp được đọc cục bộ, không gửi lên máy chủ.</span></div>
+              <button class="btn primary full" id="analyze-abi">⌘ Phân tích ABI</button>
+            </div>
+            <div class="panel results-panel"><div class="panel-head"><div><span class="panel-index">OUTPUT / ANALYSIS</span><h3>Cấu trúc khôi phục</h3></div><button class="mini-btn" id="export-abi">↓ JSON</button></div>
+              <div class="stats-3"><div><small>FUNCTIONS</small><b id="abi-functions">—</b></div><div><small>EVENTS</small><b id="abi-events">—</b></div><div><small>ERRORS</small><b id="abi-errors">—</b></div></div>
+              <input id="abi-filter" class="text-input" type="search" placeholder="⌕  Tìm hàm, selector, sự kiện..." aria-label="Lọc kết quả ABI">
+              <div id="abi-result" class="result-list empty-result">Chưa có kết quả. Nhập ABI và nhấn “Phân tích ABI”.</div>
+            </div>
+          </div>
+        </section>
+        <section class="view" id="view-tx">
+          <div class="page-heading"><div class="eyebrow">02 / TRANSACTION INSPECTOR</div><h1>ETH <span>Transaction Lab</span></h1><p>Giải mã calldata với ABI đã tải; có thể truy vấn transaction hash và receipt qua RPC chỉ đọc.</p></div>
+          <div class="workspace-grid">
+            <div class="panel"><div class="panel-head"><div><span class="panel-index">INPUT / CALLDATA</span><h3>Truy vấn giao dịch</h3></div><button class="mini-btn" id="sample-tx">Dữ liệu mẫu ↗</button></div>
+              <label class="field-label" for="calldata-input">Transaction input data (hex)</label><textarea id="calldata-input" rows="6" class="code-input" spellcheck="false" placeholder="0xa9059cbb000000000000..."></textarea>
+              <button class="btn primary full" id="decode-tx">⇄ Giải mã calldata</button>
+              <div class="form-divider">HOẶC TRA CỨU ON-CHAIN</div>
+              <label class="field-label" for="tx-hash">Transaction hash</label><input id="tx-hash" class="text-input" placeholder="0x... (32 bytes)" spellcheck="false">
+              <label class="field-label" for="tx-rpc">Ethereum JSON-RPC HTTPS (read-only)</label><input id="tx-rpc" class="text-input rpc-input" placeholder="https://ethereum-rpc.publicnode.com" spellcheck="false">
+              <button class="btn secondary full" id="lookup-tx">↗ Tải transaction + receipt</button>
+              <p class="form-note">Yêu cầu sẽ đi trực tiếp từ trình duyệt tới RPC bạn nhập. Chỉ sử dụng endpoint tin cậy, hỗ trợ CORS.</p>
+            </div>
+            <div class="panel results-panel"><div class="panel-head"><div><span class="panel-index">OUTPUT / DECODE</span><h3>Thông tin giao dịch</h3></div><button class="mini-btn" id="export-tx">↓ JSON</button></div><div id="tx-result" class="result-list empty-result">Chưa có kết quả giải mã. Dùng ABI mẫu và calldata mẫu để thử.</div></div>
+          </div>
+        </section>
+        <section class="view" id="view-bytecode">
+          <div class="page-heading"><div class="eyebrow">03 / EVM STATIC FORENSICS</div><h1>Bytecode <span>Explorer</span></h1><p>Giải mã opcode EVM, xác định selector tiềm năng, hành vi storage và dấu hiệu proxy — không giả nhận đây là full VarLifter.</p></div>
+          <div class="workspace-grid">
+            <div class="panel"><div class="panel-head"><div><span class="panel-index">INPUT / RUNTIME EVM</span><h3>Runtime bytecode</h3></div><button class="mini-btn" id="sample-bytecode">Bytecode mẫu ↗</button></div>
+              <label class="field-label" for="bytecode-input">Bytecode hex (runtime, không phải creation code)</label><textarea id="bytecode-input" class="code-input" rows="10" spellcheck="false" placeholder="0x6080604052..."></textarea>
+              <button class="btn primary full" id="analyze-bytecode">▦ Disassemble & phân tích</button>
+              <div class="form-divider">HOẶC ĐỌC HỢP ĐỒNG</div>
+              <label class="field-label" for="contract-address">Địa chỉ contract Ethereum</label><input id="contract-address" class="text-input" placeholder="0x... (20 bytes)" spellcheck="false">
+              <label class="field-label" for="contract-rpc">Ethereum JSON-RPC HTTPS</label><input id="contract-rpc" class="text-input rpc-input" placeholder="https://ethereum-rpc.publicnode.com" spellcheck="false">
+              <button class="btn secondary full" id="lookup-contract">↗ Tải code + kiểm tra ERC-1967</button>
+              <p class="form-note">Các slot hiển thị từ heuristic không phải kiểu storage đã được VarLifter xác minh. Chỉ đọc RPC, không ký.</p>
+            </div>
+            <div class="panel results-panel"><div class="panel-head"><div><span class="panel-index">OUTPUT / OPCODES</span><h3>Báo cáo EVM</h3></div><button class="mini-btn" id="export-bytecode">↓ JSON</button></div><div id="bytecode-result" class="result-list empty-result">Nhập runtime bytecode để xem opcode, function selector và dấu hiệu đọc/ghi trạng thái.</div></div>
+          </div>
+        </section>
+        <section class="view" id="view-mev">
+          <div class="page-heading"><div class="eyebrow">04 / EXECUTION INTELLIGENCE</div><h1>MEV <span>Intelligence</span></h1><p>Rà soát dấu hiệu tương tác DeFi từ một giao dịch. Không thể kết luận sandwich, arbitrage hoặc liquidations chỉ từ ABI.</p></div>
+          <div class="workspace-grid">
+            <div class="panel"><div class="panel-head"><div><span class="panel-index">ON-CHAIN / EVIDENCE</span><h3>Phân tích chứng cứ</h3></div><span class="tag warning">READ ONLY</span></div>
+              <p class="mev-intro">Phân tích metadata của transaction, receipt và các event đã giải mã. Tải giao dịch từ mục Transaction Lab trước, sau đó chạy phân tích.</p>
+              <div class="info-row"><span>01</span><div><strong>Call & selector</strong><small>Hàm đã gọi, nội dung calldata và ABI khớp</small></div></div>
+              <div class="info-row"><span>02</span><div><strong>Gas & receipt</strong><small>Chi phí, trạng thái, block và logs thực tế</small></div></div>
+              <div class="info-row"><span>03</span><div><strong>MEV hypotheses</strong><small>Quan sát tương tác; đánh dấu dữ liệu còn thiếu</small></div></div>
+              <button class="btn primary full" id="analyze-mev">⌁ Phân tích bằng chứng MEV</button>
+              <button class="btn ghost full" data-go="tx">Mở Transaction Lab ↗</button>
+            </div>
+            <div class="panel results-panel"><div class="panel-head"><div><span class="panel-index">OUTPUT / EVIDENCE LEVEL</span><h3>Phân tích MEV</h3></div><button class="mini-btn" id="export-mev">↓ JSON</button></div><div id="mev-result" class="result-list empty-result">Chưa có dữ liệu giao dịch. ABI hoặc selector riêng lẻ không đủ xác nhận chiến lược MEV.</div></div>
+          </div>
+          <div class="disclaimer"><span>!</span><div><strong>Không kết luận MEV từ một giao dịch đơn lẻ</strong><p>Để chứng minh sandwich hoặc arbitrage thường cần block-level ordering, traces, swap paths, thay đổi dự trữ và lợi nhuận sau phí. Một lệnh swap bình thường không tự động là giao dịch MEV.</p></div></div>
+        </section>
+      </div>
+      <footer class="footer"><span>© 2026 ABI NEXUS · WEB3 OPEN RESEARCH LAB</span><span>ETHEREUM / EVM <i>·</i> NO WALLET CONNECTION <i>·</i> NO TRANSACTION SIGNING</span></footer>
+    </main>
+  </div>
+  <dialog id="help-dialog" class="help-dialog"><div class="modal-top"><strong>ABI NEXUS · Giới hạn khoa học</strong><button id="close-help" class="mini-btn" aria-label="Đóng">✕</button></div><p>ABI mô tả giao diện công khai nhưng không chứa toàn bộ logic hoặc biến state. Bytecode Explorer chỉ cung cấp disassembly và heuristic có nhãn độ tin cậy, không chạy trực tiếp lõi Python VarLifter. MEV cần ngữ cảnh đa giao dịch và traces để kết luận.</p><p>Ứng dụng không yêu cầu private key, không ký hay gửi giao dịch. Khi gọi RPC, địa chỉ IP và truy vấn được gửi tới nhà cung cấp endpoint đó.</p><form method="dialog"><button class="btn primary full">Đã hiểu</button></form></dialog>
+  <div id="toast" role="status" aria-live="polite" class="toast"></div>
+</body>
+</html>
