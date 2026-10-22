@@ -17,7 +17,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Validate JavaScript syntax
-        run: node --check app.js
+        run: |
+          node --check app.js
+          node --check storage.js
+      - name: Validate backend Python syntax
+        run: python -m compileall -q backend tests
+      - name: Storage and mapping regression tests
+        run: python -m unittest discover -s tests -v
       - name: Validate links and element references
         run: |
           node - <<'NODE'
@@ -28,7 +34,7 @@ jobs:
           const ids = [...js.matchAll(/\$\("([^"]+)"\)/g)].map(m => m[1]);
           const missing = [...new Set(ids)].filter(id => !html.includes('id="' + id + '"'));
           if (missing.length) throw Error('Missing DOM ids: ' + missing.join(', '));
-          for (const file of ['app.js','styles.css']) {
+          for (const file of ['app.js','storage.js','styles.css']) {
             if (!html.includes('./' + file)) throw Error('Asset missing from HTML: ' + file);
           }
           if (js.includes('.innerHTML')) throw Error('Avoid rendering untrusted chain data via innerHTML');
