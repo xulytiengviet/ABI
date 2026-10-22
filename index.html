@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080c1d">
   <meta name="description" content="ABI Nexus: phòng thí nghiệm Web3 để giải mã ABI, giao dịch Ethereum, disassemble EVM bytecode và phân tích bằng chứng MEV.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https: http://localhost:8545 http://127.0.0.1:8545; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https: http://localhost:* http://127.0.0.1:*; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'">
   <title>ABI NEXUS · EVM Reverse Engineering & MEV Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="./styles.css">
   <script defer src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
   <script defer src="./app.js"></script>
+  <script defer src="./storage.js"></script>
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div><div class="grain"></div>
@@ -28,7 +29,9 @@
         <button class="nav-link" data-go="abi"><span class="nav-ico">⌘</span><span>Giải mã ABI</span><span class="nav-trailing">02</span></button>
         <button class="nav-link" data-go="tx"><span class="nav-ico">⇄</span><span>Giao dịch ETH</span><span class="nav-trailing">03</span></button>
         <button class="nav-link" data-go="bytecode"><span class="nav-ico">▦</span><span>Phục hồi Bytecode</span><span class="nav-trailing">04</span></button>
-        <button class="nav-link" data-go="mev"><span class="nav-ico">⌁</span><span>MEV Intelligence</span><span class="nav-trailing">05</span></button>
+        <button class="nav-link" data-go="storage"><span class="nav-ico">▥</span><span>Storage Layout</span><span class="nav-trailing">05</span></button>
+        <button class="nav-link" data-go="mapping"><span class="nav-ico">⊞</span><span>Mapping Recovery</span><span class="nav-trailing">06</span></button>
+        <button class="nav-link" data-go="mev"><span class="nav-ico">⌁</span><span>MEV Intelligence</span><span class="nav-trailing">07</span></button>
       </nav>
       <div class="sidebar-divider"></div>
       <div class="side-kicker">TÀI NGUYÊN</div>
@@ -149,8 +152,60 @@
           </div>
           <div class="disclaimer"><span>!</span><div><strong>Không kết luận MEV từ một giao dịch đơn lẻ</strong><p>Để chứng minh sandwich hoặc arbitrage thường cần block-level ordering, traces, swap paths, thay đổi dự trữ và lợi nhuận sau phí. Một lệnh swap bình thường không tự động là giao dịch MEV.</p></div></div>
         </section>
+
+        <section class="view" id="view-storage">
+          <div class="page-heading">
+            <div class="eyebrow">05 / EVM STATE RECOVERY</div>
+            <h1>Storage <span>Layout Explorer</span></h1>
+            <p>Khôi phục ứng viên vùng storage theo từng byte; phân biệt packed variables với truy cập cùng slot. Kết nối backend Gigahorse–DYELS để nhận phân tích cấu trúc thực.</p>
+          </div>
+          <div class="storage-banner"><span class="storage-pill" id="storage-mode">LOCAL HEURISTIC</span><span id="storage-health">Không có backend được xác nhận</span><button class="mini-btn" id="storage-health-check">Kiểm tra backend ↗</button></div>
+          <div class="workspace-grid storage-workspace">
+            <div class="panel">
+              <div class="panel-head"><div><span class="panel-index">INPUT / RUNTIME BYTECODE</span><h3>Phân tích storage</h3></div><button class="mini-btn" id="storage-sample">Ví dụ packed & mapping</button></div>
+              <label class="field-label" for="storage-bytecode">Ethereum runtime bytecode (hex)</label>
+              <textarea id="storage-bytecode" class="code-input" rows="9" spellcheck="false" placeholder="0x6080604052..."></textarea>
+              <div class="upload-row"><button class="mini-btn" id="storage-copy">↑ Lấy từ Bytecode Explorer</button><span>Không gửi dữ liệu khi chạy phân tích cục bộ.</span></div>
+              <button class="btn secondary full" id="storage-local">▥ Phân tích cấu trúc cục bộ</button>
+              <div class="form-divider">DYELS / GIGAHORSE BACKEND</div>
+              <label class="field-label" for="storage-api">Backend URL (HTTPS, ví dụ https://api.example.com)</label>
+              <input id="storage-api" class="text-input" type="url" placeholder="https://your-api.example.com" spellcheck="false" autocomplete="off"/>
+              <label class="field-label" for="storage-token">Bearer token (tùy chọn; không lưu)</label>
+              <input id="storage-token" class="text-input" type="password" autocomplete="off" placeholder="Chỉ dành cho backend riêng"/>
+              <button class="btn primary full" id="storage-deep">◈ Chạy phục hồi DYELS</button>
+              <p class="form-note">Chỉ gửi bytecode tới backend khi nhấn nút DYELS. GitHub Pages không chạy Datalog; backend cần cài Soufflé và Gigahorse. Không nhập private key.</p>
+            </div>
+            <div class="panel results-panel">
+              <div class="panel-head"><div><span class="panel-index">OUTPUT / SLOT INTELLIGENCE</span><h3>Sơ đồ storage</h3></div><button class="mini-btn" id="storage-export">↓ JSON</button></div>
+              <div class="stats-3"><div><small>SLOT/ROOT</small><b id="storage-count">—</b></div><div><small>PACKED</small><b id="packed-count">—</b></div><div><small>MAPPING</small><b id="mapping-count">—</b></div></div>
+              <div id="storage-result" class="result-list empty-result">Nhập runtime bytecode để quét cục bộ hoặc kết nối DYELS để nhận bằng chứng storage có cấu trúc.</div>
+            </div>
+          </div>
+          <div class="disclaimer"><span>ⓘ</span><div><strong>Không đồng nhất opcode và biến Solidity</strong><p>Quét cục bộ chỉ đưa ra các ứng viên (heuristics). Chỉ kết quả DYELS sau khi backend thực thi và trả các quan hệ Datalog mới được gắn nhãn ENGINE RESULT. Các vùng trùng slot không mặc định là xung đột.</p></div></div>
+        </section>
+        <section class="view" id="view-mapping">
+          <div class="page-heading">
+            <div class="eyebrow">06 / DATA STRUCTURE INFERENCE</div>
+            <h1>Mapping <span>Type Recovery</span></h1>
+            <p>Đọc cây mapping lồng nhau và kiểu key/value từ quan hệ DYELS; đối chiếu ABI getter như bằng chứng hỗ trợ — không tự đánh đồng getter với storage mapping.</p>
+          </div>
+          <div class="workspace-grid">
+            <div class="panel">
+              <div class="panel-head"><div><span class="panel-index">INFERENCE / TYPE HINTS</span><h3>Đối chiếu ABI getter</h3></div><button class="mini-btn" id="mapping-example">Ví dụ ABI getter</button></div>
+              <label class="field-label" for="mapping-abi">ABI getter JSON (hỗ trợ định dạng mảng / object.abi)</label>
+              <textarea id="mapping-abi" class="code-input" rows="10" spellcheck="false" placeholder='[{"type":"function","name":"balances","inputs":[{"type":"address"}],"outputs":[{"type":"uint256"}],"stateMutability":"view"}]'></textarea>
+              <button class="btn secondary full" id="mapping-hints">⊞ Suy luận ứng viên từ ABI</button>
+              <button class="btn ghost full" data-go="storage">Mở Storage Explorer để chạy DYELS ↗</button>
+              <p class="form-note">ABI getter chỉ chỉ ra kiểu tham số/đầu ra của hàm. Nếu không đối chiếu được data-flow đến storage, không thể khẳng định chính xác key/value mapping.</p>
+            </div>
+            <div class="panel results-panel">
+              <div class="panel-head"><div><span class="panel-index">OUTPUT / STRUCTURE TREE</span><h3>Cây key/value</h3></div><button class="mini-btn" id="mapping-export">↓ JSON</button></div>
+              <div id="mapping-result" class="result-list empty-result">Chưa có dữ liệu. Chạy backend DYELS trong Storage Explorer hoặc nhập ABI getter để xem ứng viên kiểu.</div>
+            </div>
+          </div>
+        </section>
       </div>
-      <footer class="footer"><span>© 2026 ABI NEXUS · WEB3 OPEN RESEARCH LAB</span><span>ETHEREUM / EVM <i>·</i> NO WALLET CONNECTION <i>·</i> NO TRANSACTION SIGNING</span></footer>
+      <footer class="footer"<span>© 2026 ABI NEXUS · WEB3 OPEN RESEARCH LAB</span><span>ETHEREUM / EVM <i>·</i> NO WALLET CONNECTION <i>·</i> NO TRANSACTION SIGNING</span></footer>
     </main>
   </div>
   <dialog id="help-dialog" class="help-dialog"><div class="modal-top"><strong>ABI NEXUS · Giới hạn khoa học</strong><button id="close-help" class="mini-btn" aria-label="Đóng">✕</button></div><p>ABI mô tả giao diện công khai nhưng không chứa toàn bộ logic hoặc biến state. Bytecode Explorer chỉ cung cấp disassembly và heuristic có nhãn độ tin cậy, không chạy trực tiếp lõi Python VarLifter. MEV cần ngữ cảnh đa giao dịch và traces để kết luận.</p><p>Ứng dụng không yêu cầu private key, không ký hay gửi giao dịch. Khi gọi RPC, địa chỉ IP và truy vấn được gửi tới nhà cung cấp endpoint đó.</p><button class="btn primary full" id="ack-help">Đã hiểu</button></dialog>
