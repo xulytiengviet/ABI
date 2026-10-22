@@ -1,0 +1,14 @@
+// ABI NEXUS — Gigahorse/DYELS storage analysis client.
+// Copy into <gigahorse-root>/clients/abi_nexus_storage.dl.
+// Includes the actual DYELS storage library; does not emulate the engine.
+#include "../clientlib/storage_modeling/storage_modeling.dl"
+
+// Raw, auditable evidence for storage layout and type inference.
+.output StorageVariableInfo
+.output StorageVariable_Type
+.output DataStructure_Type
+.output Mapping_KeyType
+.output DataStructure_ValueOrElementType
+.output DataStructureValueIsStruct
+.output StorageStmtKindAndConstruct
+.output StorageStmt_HighLevelUses
