@@ -16,7 +16,7 @@ const SAMPLE_BYTECODE="0x6080604052348015600f57600080fd5b5060043610602f576000356
 const ERC1967_IMPL="0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
 const ERC1967_BEACON="0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50";
 const RPC_DEFAULT="https://ethereum-rpc.publicnode.com";
-const labels={dashboard:"TỔNG QUAN",abi:"GIẢI MÃ ABI",tx:"GIAO DỊCH ETH",bytecode:"PHỤC HỒI BYTECODE",mev:"MEV INTELLIGENCE"};
+const labels={dashboard:"TỔNG QUAN",abi:"GIẢI MÃ ABI",tx:"GIAO DỊCH ETH",bytecode:"PHỤC HỒI BYTECODE",storage:"STORAGE LAYOUT",mapping:"MAPPING RECOVERY",mev:"MEV INTELLIGENCE"};
 const toText=(x)=>typeof x==="bigint"?x.toString():x===undefined?"—":x===null?"null":typeof x==="object"?JSON.stringify(x,(k,v)=>typeof v==="bigint"?v.toString():v,2):String(x);
 const json=(x)=>JSON.stringify(x,(k,v)=>typeof v==="bigint"?v.toString():v,2);
 let toastTimeout;
