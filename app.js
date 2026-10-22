@@ -28,6 +28,7 @@ window.addEventListener("hashchange",()=>{const target=location.hash.replace("#"
 if(labels[location.hash.slice(1)])nav(location.hash.slice(1));
 $("btn-help").addEventListener("click",()=>$("help-dialog").showModal());
 $("close-help").addEventListener("click",()=>$("help-dialog").close());
+$("ack-help").addEventListener("click",()=>$("help-dialog").close());
 window.addEventListener("load",()=>{const ready=!!window.ethers;$("lib-status").textContent=ready?"●  ETHERS V6 · SẴN SÀNG":"⚠  KHÔNG TẢI ĐƯỢC ETHERS";$("metric-version").textContent=ready?"EVM V6":"OFFLINE"});
 function clear(e){e.classList.remove("empty-result");e.replaceChildren()}
 function el(tag,className,value){const n=document.createElement(tag);if(className)n.className=className;if(value!==undefined)n.textContent=toText(value);return n}
