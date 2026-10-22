@@ -1,0 +1,36 @@
+name: ABI Nexus static checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate JavaScript syntax
+        run: node --check app.js
+      - name: Validate links and element references
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html','utf8');
+          const js = fs.readFileSync('app.js','utf8');
+          const css = fs.readFileSync('styles.css','utf8');
+          const ids = [...js.matchAll(/\$\("([^"]+)"\)/g)].map(m => m[1]);
+          const missing = [...new Set(ids)].filter(id => !html.includes('id="' + id + '"'));
+          if (missing.length) throw Error('Missing DOM ids: ' + missing.join(', '));
+          for (const file of ['app.js','styles.css']) {
+            if (!html.includes('./' + file)) throw Error('Asset missing from HTML: ' + file);
+          }
+          if (js.includes('.innerHTML')) throw Error('Avoid rendering untrusted chain data via innerHTML');
+          console.log('Validated', ids.length, 'DOM ID references. CSS chars:', css.length);
+          NODE
