@@ -108,6 +108,7 @@
             <div class="panel"><div class="panel-head"><div><span class="panel-index">INPUT / CALLDATA</span><h3>Truy vấn giao dịch</h3></div><button class="mini-btn" id="sample-tx">Dữ liệu mẫu ↗</button></div>
               <label class="field-label" for="calldata-input">Transaction input data (hex)</label><textarea id="calldata-input" rows="6" class="code-input" spellcheck="false" placeholder="0xa9059cbb000000000000..."></textarea>
               <button class="btn primary full" id="decode-tx">⇄ Giải mã calldata</button>
+              <button class="btn ghost full" id="lookup-4byte">⌕ Tra cứu chữ ký 4byte.directory</button>
               <div class="form-divider">HOẶC TRA CỨU ON-CHAIN</div>
               <label class="field-label" for="tx-hash">Transaction hash</label><input id="tx-hash" class="text-input" placeholder="0x... (32 bytes)" spellcheck="false">
               <label class="field-label" for="tx-rpc">Ethereum JSON-RPC HTTPS (read-only)</label><input id="tx-rpc" class="text-input rpc-input" placeholder="https://ethereum-rpc.publicnode.com" spellcheck="false">
@@ -123,6 +124,7 @@
             <div class="panel"><div class="panel-head"><div><span class="panel-index">INPUT / RUNTIME EVM</span><h3>Runtime bytecode</h3></div><button class="mini-btn" id="sample-bytecode">Bytecode mẫu ↗</button></div>
               <label class="field-label" for="bytecode-input">Bytecode hex (runtime, không phải creation code)</label><textarea id="bytecode-input" class="code-input" rows="10" spellcheck="false" placeholder="0x6080604052..."></textarea>
               <button class="btn primary full" id="analyze-bytecode">▦ Disassemble & phân tích</button>
+              <button class="btn ghost full" id="lookup-bytecode-4byte">⌕ Tra cứu selector ứng viên</button>
               <div class="form-divider">HOẶC ĐỌC HỢP ĐỒNG</div>
               <label class="field-label" for="contract-address">Địa chỉ contract Ethereum</label><input id="contract-address" class="text-input" placeholder="0x... (20 bytes)" spellcheck="false">
               <label class="field-label" for="contract-rpc">Ethereum JSON-RPC HTTPS</label><input id="contract-rpc" class="text-input rpc-input" placeholder="https://ethereum-rpc.publicnode.com" spellcheck="false">
